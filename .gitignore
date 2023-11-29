@@ -1,0 +1,39 @@
+# Generated with ChatGPT
+# Standard Visual Studio files to ignore
+[Bb]in/
+[Oo]bj/
+[Ll]ogs/
+[Dd]ebug*/
+[Rr]elease*/
+x64/
+x86/
+[Vv]s/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# lib files
+*.lib
+
+# Ignore build results
+[Dd]ebug/
+[Bb]uild/
+[Rr]elease/
+
+# Miscellaneous files
+*.swp
+*.bak
+*.tmp
+*~
+*.vscode/
+*.vs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
