@@ -32,55 +32,11 @@ void Game::Init()
 	else
 		fprintf(stderr, "RoomShader created!\n");
 
-	mIShapeVB.Init();
-	mIShapeVB.glBegin(GL_TRIANGLES);
-	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 3; j++) {
-			int k = IShapeIndices[i][j];
-			mIShapeVB.glColor3fv(IShapeColors[k]);
-			mIShapeVB.glVertex3fv(IShapeVertices[k]);
-		}
-	}
-
-	mDeadEndVB.Init();
-	mDeadEndVB.glBegin(GL_TRIANGLES);
-	for (int i = 0; i < 10; i++) {
-		for (int j = 0; j < 3; j++) {
-			int k = DeadEndIndices[i][j];
-			mDeadEndVB.glColor3fv(DeadEndColors[k]);
-			mDeadEndVB.glVertex3fv(DeadEndVertices[k]);
-		}
-	}
-
-	mLShapeVB.Init();
-	mLShapeVB.glBegin(GL_TRIANGLES);
-	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 3; j++) {
-			int k = LShapeIndices[i][j];
-			mLShapeVB.glColor3fv(LShapeColors[k]);
-			mLShapeVB.glVertex3fv(LShapeVertices[k]);
-		}
-	}
-
-	mTShapeVB.Init();
-	mTShapeVB.glBegin(GL_TRIANGLES);
-	for (int i = 0; i < 6; i++) {
-		for (int j = 0; j < 3; j++) {
-			int k = TShapeIndices[i][j];
-			mTShapeVB.glColor3fv(TShapeColors[k]);
-			mTShapeVB.glVertex3fv(TShapeVertices[k]);
-		}
-	}
-
-	mXShapeVB.Init();
-	mXShapeVB.glBegin(GL_TRIANGLES);
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 3; j++) {
-			int k = XShapeIndices[i][j];
-			mXShapeVB.glColor3fv(XShapeColors[k]);
-			mXShapeVB.glVertex3fv(XShapeVertices[k]);
-		}
-	}
+	initRoomVB(4, roomShape::I_SHAPE, mIShapeVB);
+	initRoomVB(5, roomShape::DEAD_END, mDeadEndVB);
+	initRoomVB(4, roomShape::L_SHAPE, mLShapeVB);
+	initRoomVB(3, roomShape::T_SHAPE, mTShapeVB);
+	initRoomVB(2, roomShape::X_SHAPE, mXShapeVB);
 }
 
 void Game::Display()
@@ -158,11 +114,13 @@ void Game::SpecialKeys(int key, int x, int y) {
 void Game::drawMaze(std::vector<std::vector<roomInfo>> maze)
 {
 	RoomShader.Use();
+	RoomShader.SetUniformVariable("uColor", glm::vec3(1.0, 1., 1.));
 	RoomShader.SetUniformVariable("projectionMatrix", mProjection);
 	RoomShader.SetUniformVariable("viewMatrix", mView);
-	// The model matrix is rotated before drawing each room in the maze.
+	// The model matrix is rotated before drawing each room in the maze.	
 	for (int i = 0; i < maze.size(); i++) {
 		for (int j = 0; j < maze[i].size(); j++) {
+			RoomShader.Use();
 			mModel = glm::translate(mModel, maze[i][j].position);
 			mModel = glm::rotate(mModel, maze[i][j].rotation, glm::vec3(0., 1., 0.));			
 			RoomShader.SetUniformVariable("modelMatrix", mModel);
@@ -198,9 +156,53 @@ void Game::drawMaze(std::vector<std::vector<roomInfo>> maze)
 	RoomShader.UnUse();
 }
 
+
 void Game::setMaze(std::vector<std::vector<TileState>> layout)
 {
 	mMaze = alignRoom(layout);
+}
+
+void Game::initRoomVB(int numFaces, roomShape shape, VertexBufferObject& vbo)
+{
+	int k = 0;
+	vbo.Init();
+	vbo.glBegin(GL_TRIANGLES);
+	for (int i = 0; i < numFaces * 2; i++) {
+		for (int j = 0; j < 3; j++) {
+			switch (shape) {
+			case I_SHAPE:
+				k = IShapeIndices[i][j];
+				vbo.glNormal3fv(IShapeNormals[i]);
+				vbo.glVertex3fv(IShapeVertices[k]);
+				break;
+
+			case DEAD_END:
+				k = DeadEndIndices[i][j];
+				vbo.glNormal3fv(DeadEndNormals[i]);
+				vbo.glVertex3fv(DeadEndVertices[k]);
+				break;
+
+			case L_SHAPE:
+				k = LShapeIndices[i][j];
+				vbo.glNormal3fv(LShapeNormals[i]);
+				vbo.glVertex3fv(LShapeVertices[k]);
+				break;
+
+			case T_SHAPE:
+				k = TShapeIndices[i][j];
+				vbo.glNormal3fv(TShapeNormals[i]);
+				vbo.glVertex3fv(TShapeVertices[k]);
+				break;
+
+			case X_SHAPE:
+				k = XShapeIndices[i][j];
+				vbo.glNormal3fv(XShapeNormals[i]);
+				vbo.glVertex3fv(XShapeVertices[k]);
+				break;
+			}
+		}
+	}
+	vbo.glEnd();
 }
 
 void Game::updateViewParameters()

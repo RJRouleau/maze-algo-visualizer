@@ -62,8 +62,9 @@ public:
 	void setMaze(std::vector<std::vector<TileState>> layout);
 
 private:
+	void initRoomVB(int numFaces, roomShape shape, VertexBufferObject& vbo);
 	void updateViewParameters();
-	void drawMaze(std::vector<std::vector<roomInfo>> maze);	
+	void drawMaze(std::vector<std::vector<roomInfo>> maze);
 
 	std::vector<std::vector<roomInfo>> alignRoom(std::vector<std::vector<TileState>> layout);
 	roomInfo createDeadEnd(std::vector<char> directionList);

@@ -118,6 +118,16 @@ VertexBufferObject::Draw( )
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)0);
 	glEnableVertexAttribArray(0);
 
+	// setup "aNormal"
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(struct Point), (void*)offsetof(Point, nx));
+	glEnableVertexAttribArray(1);
+	// setup "aColors"
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(struct Point), (void*)offsetof(Point, r));
+	glEnableVertexAttribArray(2);
+	// setup "aTexCoords"
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(struct Point), (void*)offsetof(Point, s));
+	glEnableVertexAttribArray(3);
+
 	if( hasNormals )	
 	{
 		glNormalPointer(   GL_FLOAT, sizeof(struct Point),               ELEMENT_OFFSET( &parray[0].x, &parray[0].nx ) );
