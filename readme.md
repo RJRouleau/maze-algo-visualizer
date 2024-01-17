@@ -1,4 +1,4 @@
-# 3D Maze Solver Visualizer
+# Maze Algorithm Visualizer
 
 ## Introduction
 
@@ -61,3 +61,7 @@ Originating from a desire to explore topics beyond the scope of CS 450 Intro to 
 - For now, you can navigate around the maze using the arrow keys to move forward, backward, turn left, or turn right. Use the 'a' and 'd' keys to strafe left and right. Use 'e' or 'q' to move up or down.
 
 - Press 'ESC' to return to the layout screen.
+
+## Acknowledgements
+- This project was adapted from a sample OpenGL project and makes use of glslprogram.h/.cpp and vertexbufferobject.h/.cpp provided courtesy of Mike Bailey during CS 450 Introduction to Computer Graphics at Oregon State University.
+
