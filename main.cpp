@@ -144,7 +144,7 @@ Animate( )
 {
 	int ms = glutGet(GLUT_ELAPSED_TIME);
 	ms %= MS_PER_CYCLE;							// makes the value of ms between 0 and MS_PER_CYCLE-1
-	Time = (float)ms / (float)MS_PER_CYCLE;		// makes the value of Time between 0. and slightly less than 1.
+	Time = 30 * (float)ms / (float)MS_PER_CYCLE;		// makes the value of Time between 0. and slightly less than 1.
 	
 	// force a call to Display( ) next time it is convenient:
 	glutSetWindow( MainWindow );
@@ -183,8 +183,7 @@ Display( )
 		break;
 
 	case GAME_SCENE:
-		GameScene.setMaze(MenuScene.getLayout());
-		GameScene.Display();
+		GameScene.Display(Time);
 		break;
 
 	default:
@@ -342,6 +341,7 @@ Keyboard( unsigned char c, int x, int y )
 
 	case ENTER:
 		NowScene = GAME_SCENE;
+		GameScene.setMaze(MenuScene.getLayout());
 		break;
 	
 	default:

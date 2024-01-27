@@ -6,10 +6,13 @@
 #include "glut.h"
 
 #include <vector>
+#include <queue>
 
 #include "vertexbufferobject.h"
 #include "glslprogram.h"
 #include "menu.h"
+#include "keytime.h" //#include "keytime.cpp" // 
+
 extern const float D2R;
 class Game
 {
@@ -32,8 +35,12 @@ private:
 		roomShape	shape;
 		float		rotation;
 		glm::vec3	position;
+		bool		start;
+		bool		end;
 	};
 	std::vector<std::vector<roomInfo>>	mMaze;
+	glm::vec3							mStartPosition;
+	glm::vec3							mEndPosition;
 
 	glm::vec3							mEye;
 	glm::vec3							mLook;
@@ -47,6 +54,12 @@ private:
 	glm::mat4							mModel;
 	glm::mat4							mRotation;
 
+	Keytimes							mSolutionKeytimesX;
+	Keytimes							mSolutionKeytimesY;
+	Keytimes							mSolutionKeytimesZ;
+
+	std::queue<glm::vec3>				mTestSolution;
+
 public:
 	GLSLProgram							GridShader;
 	GLSLProgram							RoomShader;
@@ -55,11 +68,14 @@ public:
 	~Game();
 
 	void Init();
-	void Display();
+	void Display(float time);
 	void Keyboard(unsigned char c, int x, int y);
 	void SpecialKeys(int key, int x, int y);
 
 	void setMaze(std::vector<std::vector<TileState>> layout);
+	void setSolutionKeytimes(std::queue<glm::vec3> keytimePositions);
+	void moveViewPosition(float time);
+	void rotateView(float angle);
 
 private:
 	void initRoomVB(int numFaces, roomShape shape, VertexBufferObject& vbo);

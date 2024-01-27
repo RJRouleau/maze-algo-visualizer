@@ -9,14 +9,37 @@
 #include <iostream>
 #include <algorithm>
 
-
+#include "keytime.cpp"
 
 Game::Game()
 {
-	mEye = glm::vec3(0., 5., -5.);
-	mLook = glm::vec3(0., 0., 0.);
+	glm::vec3 bottom_left = glm::vec3(0., 0., 0.);
+	glm::vec3 top_left = glm::vec3(8., 0., 0.);
+	glm::vec3 top_right = glm::vec3(8., 0., 8.);
+	float roomDistance = 2.0;
+
+	mEye = glm::vec3(0., 4., -1.);
+	mLook = glm::vec3(0., 0., 1.);
 
 	updateViewParameters();
+	mTestSolution.push(glm::vec3(0., 0., 0.));
+	mTestSolution.push(glm::vec3(0., 0., 2.));
+	mTestSolution.push(glm::vec3(0., 0., 4.));
+	mTestSolution.push(glm::vec3(0., 0., 6.));
+	mTestSolution.push(glm::vec3(0., 0., 8.));
+	mTestSolution.push(glm::vec3(2., 0., 8.));
+	mTestSolution.push(glm::vec3(4., 0., 8.));
+	mTestSolution.push(glm::vec3(6., 0., 8.));
+	mTestSolution.push(glm::vec3(8., 0., 8.));
+	mTestSolution.push(glm::vec3(8., 0., 6.));
+	mTestSolution.push(glm::vec3(8., 0., 4.));
+	mTestSolution.push(glm::vec3(8., 0., 2.));
+	mTestSolution.push(glm::vec3(8., 0., 0.));
+	mTestSolution.push(glm::vec3(6., 0., 0.));
+	mTestSolution.push(glm::vec3(4., 0., 0.));
+	mTestSolution.push(glm::vec3(2., 0., 0.));
+	mTestSolution.push(glm::vec3(0., 0., 0.));
+	setSolutionKeytimes(mTestSolution);
 }
 
 Game::~Game()
@@ -32,17 +55,18 @@ void Game::Init()
 	else
 		fprintf(stderr, "RoomShader created!\n");
 
-	initRoomVB(4, roomShape::I_SHAPE, mIShapeVB);
-	initRoomVB(5, roomShape::DEAD_END, mDeadEndVB);
-	initRoomVB(4, roomShape::L_SHAPE, mLShapeVB);
-	initRoomVB(3, roomShape::T_SHAPE, mTShapeVB);
-	initRoomVB(2, roomShape::X_SHAPE, mXShapeVB);
+	initRoomVB(3, roomShape::I_SHAPE, mIShapeVB);
+	initRoomVB(4, roomShape::DEAD_END, mDeadEndVB);
+	initRoomVB(3, roomShape::L_SHAPE, mLShapeVB);
+	initRoomVB(2, roomShape::T_SHAPE, mTShapeVB);
+	initRoomVB(1, roomShape::X_SHAPE, mXShapeVB);
 }
 
-void Game::Display()
+void Game::Display(float time)
 {
 	glClearColor(0., 0., 0., 0.);
-
+	
+	moveViewPosition(time);
 	updateViewParameters();
 
 	drawMaze(mMaze);
@@ -84,8 +108,6 @@ void Game::Keyboard(unsigned char c, int x, int y)
 }
 
 void Game::SpecialKeys(int key, int x, int y) {
-	glm::mat4 rotationMatrix;
-
 	switch (key) {
 	case GLUT_KEY_UP:
 		mEye += mForward;
@@ -98,32 +120,34 @@ void Game::SpecialKeys(int key, int x, int y) {
 		break;
 
 	case GLUT_KEY_RIGHT:
-		rotationMatrix = glm::rotate(glm::mat4(1.0f), D2R * -10.f, mUp);
+		rotateView(D2R * -10.f);
 		break;
 
 	case GLUT_KEY_LEFT:
-		rotationMatrix = glm::rotate(glm::mat4(1.0f), D2R * 10.f, mUp);
+		rotateView(D2R * 10.f);
 		break;
 	}
-
-	glm::vec3 lookDirection = mLook - mEye;
-	lookDirection = glm::vec3(rotationMatrix * glm::vec4(lookDirection, 0.0));
-	mLook = mEye + lookDirection;
 }
 
 void Game::drawMaze(std::vector<std::vector<roomInfo>> maze)
 {
 	RoomShader.Use();
-	RoomShader.SetUniformVariable("uColor", glm::vec3(1.0, 1., 1.));
 	RoomShader.SetUniformVariable("projectionMatrix", mProjection);
 	RoomShader.SetUniformVariable("viewMatrix", mView);
-	// The model matrix is rotated before drawing each room in the maze.	
+	// The model matrix is rotated before drawing each room in the maze.
 	for (int i = 0; i < maze.size(); i++) {
 		for (int j = 0; j < maze[i].size(); j++) {
 			RoomShader.Use();
 			mModel = glm::translate(mModel, maze[i][j].position);
-			mModel = glm::rotate(mModel, maze[i][j].rotation, glm::vec3(0., 1., 0.));			
+			mModel = glm::rotate(mModel, maze[i][j].rotation, glm::vec3(0., 1., 0.));
 			RoomShader.SetUniformVariable("modelMatrix", mModel);
+			RoomShader.SetUniformVariable("uColor", glm::vec3(1.0, 1., 1.));
+			if (maze[i][j].start == true) {
+				RoomShader.SetUniformVariable("uColor", glm::vec3(0.0, 1., 0.));
+			}
+			if (maze[i][j].end == true) {
+				RoomShader.SetUniformVariable("uColor", glm::vec3(1., 0., 0.));
+			}
 			switch (maze[i][j].shape) {
 			case roomShape::I_SHAPE:
 				mIShapeVB.Draw();
@@ -160,6 +184,42 @@ void Game::drawMaze(std::vector<std::vector<roomInfo>> maze)
 void Game::setMaze(std::vector<std::vector<TileState>> layout)
 {
 	mMaze = alignRoom(layout);
+	mEye = glm::vec3(mStartPosition.x, 5., mStartPosition.z -1.);
+	mLook = glm::vec3(mStartPosition.x, mStartPosition.y, mStartPosition.z + 1.);
+	updateViewParameters();
+}
+
+void Game::setSolutionKeytimes(std::queue<glm::vec3> keytimePositions)
+{
+	mSolutionKeytimesX.Init();
+	mSolutionKeytimesZ.Init();
+	float timeIncrement = 30.f / (keytimePositions.size() - 1);
+	float currentTimeValue = 0.f;	
+	while (!keytimePositions.empty()) {
+		glm::vec3 position = keytimePositions.front();
+		mSolutionKeytimesX.AddTimeValue(currentTimeValue, position.x);
+		mSolutionKeytimesZ.AddTimeValue(currentTimeValue, position.z);
+		keytimePositions.pop();
+		currentTimeValue += timeIncrement;
+	}
+}
+
+void Game::moveViewPosition(float time)
+{
+	mEye = glm::vec3(mSolutionKeytimesX.GetValue(time), 5., mSolutionKeytimesZ.GetValue(time) - 1.);
+	mLook = glm::vec3(mSolutionKeytimesX.GetValue(time), 0., mSolutionKeytimesZ.GetValue(time) + 1.);
+	updateViewParameters();
+}
+
+
+void Game::rotateView(float angle)
+{
+	glm::mat4 rotationMatrix = glm::mat4(1.0);
+	rotationMatrix = glm::rotate(rotationMatrix, angle, mUp);
+	
+	glm::vec3 lookDirection = mLook - mEye;
+	lookDirection = glm::vec3(rotationMatrix * glm::vec4(lookDirection, 0.0));
+	mLook = mEye + lookDirection;
 }
 
 void Game::initRoomVB(int numFaces, roomShape shape, VertexBufferObject& vbo)
@@ -273,6 +333,18 @@ std::vector<std::vector<Game::roomInfo>> Game::alignRoom(std::vector<std::vector
 				newRoom = createWall();
 			}			
 			newRoom.position = glm::vec3(static_cast<float>(2.0 * i), 0., static_cast<float>(2.0 * j));
+			newRoom.start = false;
+			newRoom.end = false;
+			if (layout[i][j] == TileState::START) {
+				std::cout << "Setting start\n";
+				newRoom.start = true;
+				mStartPosition = newRoom.position;
+			}
+			if (layout[i][j] == TileState::END) {
+				std::cout << "Setting end\n";
+				newRoom.end = true;
+				mEndPosition = newRoom.position;
+			}
 			rows.push_back(newRoom);
 		}
 		result.push_back(rows);
